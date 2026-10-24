@@ -1,5 +1,6 @@
 #pragma once
 #include <iostream>
+#include <unordered_map>
 #include <vector>
 #include <cstdint>
 #include <immintrin.h>
@@ -19,17 +20,27 @@ typedef struct Pebble {
 
 class Stone {
     private:
+         std::vector<uint8_t> cacheStack;
+         uint32_t cacheStackPointer;
+         std::vector<uint64_t> lutStack;
+         uint32_t lutStackPointer;
+         std::vector<uint8_t> valueStack;
+         uint32_t valueStackPointer;
+
+        bool pebbleProcess(Pebble* self);
+        std::vector<bool> initInference();
+
+    public:
         Pebble* inputs;
         Pebble* hiddens;
         Pebble* outputs;
         Pebble* pebbles;
 
-        std::vector<bool> cache; // 00 -> not cached ; 10 -> cached 0 ; 11 -> cached 1
-        std::vector<bool> value;
+        std::unordered_map<uint64_t, uint64_t> cacheTransMap;
 
-        bool pebbleProcess(Pebble* self);
+        std::vector<uint8_t> cache; // 00 -> not cached ; 10 -> cached 0 ; 11 -> cached 1
+        std::vector<uint8_t> value;
 
-    public:
         StbHeader stbHeader;
 
         Stone(const std::string& path);
