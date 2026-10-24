@@ -137,14 +137,13 @@ std::vector<bool> Stone::inference(std::vector<bool> &input) {
 	}
 	this->cacheStack.push_back(false); // index: amountOfInputs (constant 0)
 	this->cacheStack.push_back(true);  // index: amountOfInputs + 1 (constant 1)
-	this->cacheStackPointer = this->cacheStack.size();
 
 	for (size_t pc = 0; pc < this->lutStack.size(); pc++) {
 		uint64_t opcode = this->lutStack[pc];
 
 		if (opcode == 0) { // load a value from the cache
 			uint64_t cacheIdx = this->lutStack[++pc]; // read the index of the specified cache value
-			this->valueStack[this->valueStackPointer++] = this->cacheStack[cacheIdx]; // load the cached value onto the value stack
+			this->valueStack.push_back(this->cacheStack[cacheIdx]); // load the cached value onto the value stack
 		} else { // run an tt on the last K values
 			uint8_t packedInput = 0;
 			size_t baseIdx = this->valueStack.size() - this->stbHeader.LUTK; // get the value of the first input
@@ -154,11 +153,9 @@ std::vector<bool> Stone::inference(std::vector<bool> &input) {
 			}
 
 			bool res = calcTT(packedInput, opcode); // calculate the value
-
-			this->valueStackPointer = baseIdx; // reset to the "sp"
-
-			this->valueStack[this->valueStackPointer++] = res; // push the results into the value stack
-			this->cacheStack[this->cacheStackPointer++] = res; // push the results into the cache stack
+			this->valueStack.resize(baseIdx);
+			this->valueStack.push_back(res);  // push the results into the value stack
+			this->cacheStack.push_back(res);  // push the results into the cache stack
 		}
 	}
 

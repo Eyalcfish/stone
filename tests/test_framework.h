@@ -6,6 +6,11 @@
 #include <chrono>
 #include <sstream>
 
+#ifdef _WIN32
+#include <windows.h>
+#include <csetjmp>
+#endif
+
 namespace TestFramework {
 
 struct TestCase {
@@ -33,6 +38,33 @@ inline TestContext& getContext() {
 	static TestContext ctx;
 	return ctx;
 }
+
+#ifdef _WIN32
+inline jmp_buf& getCrashJumpBuf() {
+	static jmp_buf buf;
+	return buf;
+}
+
+inline bool& getInTestFlag() {
+	static bool flag = false;
+	return flag;
+}
+
+inline LONG WINAPI TestVectoredCrashHandler(PEXCEPTION_POINTERS pExceptionInfo) {
+	if (getInTestFlag() && pExceptionInfo->ExceptionRecord->ExceptionCode == EXCEPTION_ACCESS_VIOLATION) {
+		longjmp(getCrashJumpBuf(), 1);
+	}
+	return EXCEPTION_CONTINUE_SEARCH;
+}
+
+inline void setupCrashHandler() {
+	static bool initialized = false;
+	if (!initialized) {
+		AddVectoredExceptionHandler(1, TestVectoredCrashHandler);
+		initialized = true;
+	}
+}
+#endif
 
 #define TEST_CONCAT_INNER(a, b) a ## b
 #define TEST_CONCAT(a, b) TEST_CONCAT_INNER(a, b)
@@ -101,6 +133,10 @@ inline int runAllTests() {
 	std::cout << "Running " << tests.size() << " test cases..." << std::endl;
 	std::cout << "==================================================" << std::endl;
 
+#ifdef _WIN32
+	setupCrashHandler();
+#endif
+
 	auto startTime = std::chrono::high_resolution_clock::now();
 
 	for (const auto& test : tests) {
@@ -110,6 +146,25 @@ inline int runAllTests() {
 		int prevFailures = ctx.failuresCount;
 
 		auto t0 = std::chrono::high_resolution_clock::now();
+
+#ifdef _WIN32
+		getInTestFlag() = true;
+		if (setjmp(getCrashJumpBuf()) == 0) {
+			try {
+				test.func();
+			} catch (const std::exception& e) {
+				ctx.failuresCount++;
+				ctx.failureMessages.push_back(std::string("Exception caught: ") + e.what());
+			} catch (...) {
+				ctx.failuresCount++;
+				ctx.failureMessages.push_back("Unknown non-std exception caught");
+			}
+		} else {
+			ctx.failuresCount++;
+			ctx.failureMessages.push_back("Segmentation fault / Access violation (SIGSEGV) encountered in source code execution");
+		}
+		getInTestFlag() = false;
+#else
 		try {
 			test.func();
 		} catch (const std::exception& e) {
@@ -119,6 +174,8 @@ inline int runAllTests() {
 			ctx.failuresCount++;
 			ctx.failureMessages.push_back("Unknown non-std exception caught");
 		}
+#endif
+
 		auto t1 = std::chrono::high_resolution_clock::now();
 		auto durationUs = std::chrono::duration_cast<std::chrono::microseconds>(t1 - t0).count();
 
