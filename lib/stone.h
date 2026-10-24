@@ -20,10 +20,9 @@ typedef struct Pebble {
 
 class Stone {
     private:
+         std::vector<uint64_t> lutStack;
          std::vector<uint8_t> cacheStack;
          uint32_t cacheStackPointer;
-         std::vector<uint64_t> lutStack;
-         uint32_t lutStackPointer;
          std::vector<uint8_t> valueStack;
          uint32_t valueStackPointer;
 
