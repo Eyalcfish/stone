@@ -388,3 +388,77 @@ TEST_CASE("Stone_MultiRock_WideCircuitOutputs") {
 		}
 	}
 }
+
+
+TEST_CASE("Stone_Caching_SharedSubexpression") {
+	// Diamond DAG with shared subexpression:
+	// in0, in1
+	// Gate 0 (id 2): XOR(in0, in1)
+	// Gate 1 (id 3): AND(Gate 0, Gate 0) -> Both inputs share Gate 0
+	// Gate 2 (id 4): OR(Gate 1, Gate 0) -> Shares Gate 1 and Gate 0
+	std::string path = "test_caching_shared.stb";
+	TempFileRemover remover(path);
+
+	StbBuilder builder(2, 1, 2);
+	builder.addGate(0x6, {0, 1}); // Gate 0: in0 ^ in1
+	builder.addGate(0x8, {2, 2}); // Gate 1: Gate 0 & Gate 0
+	builder.addGate(0xE, {3, 2}); // Gate 2: Gate 1 | Gate 0 (Output 0)
+	builder.writeToTempFile(path);
+
+	Stone stone(path);
+
+	for (int a = 0; a <= 1; ++a) {
+		for (int b = 0; b <= 1; ++b) {
+			std::vector<rock> input = createInputRocks({a != 0, b != 0});
+			std::vector<rock> output = stone.inference(input);
+			std::vector<bool> bits = extractOutputBits(output, 1);
+
+			bool g0 = (a != 0) ^ (b != 0);
+			bool g1 = g0 && g0;
+			bool g2 = g1 || g0;
+
+			ASSERT_EQ(bits[0], g2);
+		}
+	}
+}
+
+TEST_CASE("Stone_Caching_ResetBetweenInferences") {
+	// Ensure that cache state is completely zeroed out between subsequent inference() calls
+	std::string path = "test_caching_reset.stb";
+	TempFileRemover remover(path);
+
+	StbBuilder builder(2, 2, 2);
+	builder.addGate(0x6, {0, 1}); // XOR (Sum)
+	builder.addGate(0x8, {0, 1}); // AND (Carry)
+	builder.writeToTempFile(path);
+
+	Stone stone(path);
+
+	// Alternate inputs 50 times
+	for (int iter = 0; iter < 50; ++iter) {
+		// Input 1: (true, true) => Sum=0, Carry=1
+		{
+			std::vector<rock> in1 = createInputRocks({true, true});
+			std::vector<rock> out1 = stone.inference(in1);
+			std::vector<bool> b1 = extractOutputBits(out1, 2);
+			ASSERT_FALSE(b1[0]);
+			ASSERT_TRUE(b1[1]);
+		}
+		// Input 2: (true, false) => Sum=1, Carry=0
+		{
+			std::vector<rock> in2 = createInputRocks({true, false});
+			std::vector<rock> out2 = stone.inference(in2);
+			std::vector<bool> b2 = extractOutputBits(out2, 2);
+			ASSERT_TRUE(b2[0]);
+			ASSERT_FALSE(b2[1]);
+		}
+		// Input 3: (false, false) => Sum=0, Carry=0
+		{
+			std::vector<rock> in3 = createInputRocks({false, false});
+			std::vector<rock> out3 = stone.inference(in3);
+			std::vector<bool> b3 = extractOutputBits(out3, 2);
+			ASSERT_FALSE(b3[0]);
+			ASSERT_FALSE(b3[1]);
+		}
+	}
+}
