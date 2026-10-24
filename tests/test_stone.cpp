@@ -8,7 +8,6 @@
 TEST_CASE("Stone_StructSizes_And_HeaderValidation") {
 	ASSERT_EQ(sizeof(StbHeader), 16);
 	ASSERT_EQ(sizeof(Pebble), 8);
-	ASSERT_EQ(sizeof(rock), 16);
 
 	std::string path = "test_header.stb";
 	TempFileRemover remover(path);
@@ -37,12 +36,11 @@ TEST_CASE("Stone_SingleGate_AND") {
 
 	for (int a = 0; a <= 1; ++a) {
 		for (int b = 0; b <= 1; ++b) {
-			std::vector<rock> input = createInputRocks({a != 0, b != 0});
-			std::vector<rock> output = stone.inference(input);
-			std::vector<bool> bits = extractOutputBits(output, 1);
+			std::vector<bool> input = {a != 0, b != 0};
+			std::vector<bool> output = stone.inference(input);
 
 			bool expected = (a != 0) && (b != 0);
-			ASSERT_EQ(bits[0], expected);
+			ASSERT_EQ(output[0], expected);
 		}
 	}
 }
@@ -59,12 +57,11 @@ TEST_CASE("Stone_SingleGate_OR") {
 
 	for (int a = 0; a <= 1; ++a) {
 		for (int b = 0; b <= 1; ++b) {
-			std::vector<rock> input = createInputRocks({a != 0, b != 0});
-			std::vector<rock> output = stone.inference(input);
-			std::vector<bool> bits = extractOutputBits(output, 1);
+			std::vector<bool> input = {a != 0, b != 0};
+			std::vector<bool> output = stone.inference(input);
 
 			bool expected = (a != 0) || (b != 0);
-			ASSERT_EQ(bits[0], expected);
+			ASSERT_EQ(output[0], expected);
 		}
 	}
 }
@@ -81,12 +78,11 @@ TEST_CASE("Stone_SingleGate_XOR") {
 
 	for (int a = 0; a <= 1; ++a) {
 		for (int b = 0; b <= 1; ++b) {
-			std::vector<rock> input = createInputRocks({a != 0, b != 0});
-			std::vector<rock> output = stone.inference(input);
-			std::vector<bool> bits = extractOutputBits(output, 1);
+			std::vector<bool> input = {a != 0, b != 0};
+			std::vector<bool> output = stone.inference(input);
 
 			bool expected = (a != 0) ^ (b != 0);
-			ASSERT_EQ(bits[0], expected);
+			ASSERT_EQ(output[0], expected);
 		}
 	}
 }
@@ -103,12 +99,11 @@ TEST_CASE("Stone_SingleGate_NAND") {
 
 	for (int a = 0; a <= 1; ++a) {
 		for (int b = 0; b <= 1; ++b) {
-			std::vector<rock> input = createInputRocks({a != 0, b != 0});
-			std::vector<rock> output = stone.inference(input);
-			std::vector<bool> bits = extractOutputBits(output, 1);
+			std::vector<bool> input = {a != 0, b != 0};
+			std::vector<bool> output = stone.inference(input);
 
 			bool expected = !((a != 0) && (b != 0));
-			ASSERT_EQ(bits[0], expected);
+			ASSERT_EQ(output[0], expected);
 		}
 	}
 }
@@ -129,15 +124,14 @@ TEST_CASE("Stone_MultiOutput_HalfAdder") {
 
 	for (int a = 0; a <= 1; ++a) {
 		for (int b = 0; b <= 1; ++b) {
-			std::vector<rock> input = createInputRocks({a != 0, b != 0});
-			std::vector<rock> output = stone.inference(input);
-			std::vector<bool> bits = extractOutputBits(output, 2);
+			std::vector<bool> input = {a != 0, b != 0};
+			std::vector<bool> output = stone.inference(input);
 
 			bool expectedSum = (a != 0) ^ (b != 0);
 			bool expectedCarry = (a != 0) && (b != 0);
 
-			ASSERT_EQ(bits[0], expectedSum);
-			ASSERT_EQ(bits[1], expectedCarry);
+			ASSERT_EQ(output[0], expectedSum);
+			ASSERT_EQ(output[1], expectedCarry);
 		}
 	}
 }
@@ -165,16 +159,15 @@ TEST_CASE("Stone_MultiLayer_FullAdder") {
 	for (int a = 0; a <= 1; ++a) {
 		for (int b = 0; b <= 1; ++b) {
 			for (int cin = 0; cin <= 1; ++cin) {
-				std::vector<rock> input = createInputRocks({a != 0, b != 0, cin != 0});
-				std::vector<rock> output = stone.inference(input);
-				std::vector<bool> bits = extractOutputBits(output, 2);
+				std::vector<bool> input = {a != 0, b != 0, cin != 0};
+				std::vector<bool> output = stone.inference(input);
 
 				int total = a + b + cin;
 				bool expectedSum = (total % 2) != 0;
 				bool expectedCout = (total >= 2);
 
-				ASSERT_EQ(bits[0], expectedSum);
-				ASSERT_EQ(bits[1], expectedCout);
+				ASSERT_EQ(output[0], expectedSum);
+				ASSERT_EQ(output[1], expectedCout);
 			}
 		}
 	}
@@ -200,12 +193,11 @@ TEST_CASE("Stone_MultiLayer_ParityChain") {
 		for (int b = 0; b <= 1; ++b) {
 			for (int c = 0; c <= 1; ++c) {
 				for (int d = 0; d <= 1; ++d) {
-					std::vector<rock> input = createInputRocks({a != 0, b != 0, c != 0, d != 0});
-					std::vector<rock> output = stone.inference(input);
-					std::vector<bool> bits = extractOutputBits(output, 1);
+					std::vector<bool> input = {a != 0, b != 0, c != 0, d != 0};
+					std::vector<bool> output = stone.inference(input);
 
 					bool expected = ((a ^ b ^ c ^ d) != 0);
-					ASSERT_EQ(bits[0], expected);
+					ASSERT_EQ(output[0], expected);
 				}
 			}
 		}
@@ -228,12 +220,11 @@ TEST_CASE("Stone_LUT3_Majority") {
 	for (int a = 0; a <= 1; ++a) {
 		for (int b = 0; b <= 1; ++b) {
 			for (int c = 0; c <= 1; ++c) {
-				std::vector<rock> input = createInputRocks({a != 0, b != 0, c != 0});
-				std::vector<rock> output = stone.inference(input);
-				std::vector<bool> bits = extractOutputBits(output, 1);
+				std::vector<bool> input = {a != 0, b != 0, c != 0};
+				std::vector<bool> output = stone.inference(input);
 
 				bool expected = (a + b + c >= 2);
-				ASSERT_EQ(bits[0], expected);
+				ASSERT_EQ(output[0], expected);
 			}
 		}
 	}
@@ -267,20 +258,18 @@ TEST_CASE("Stone_LUT4_Parity") {
 		bool b2 = ((i >> 2) & 1) != 0;
 		bool b3 = ((i >> 3) & 1) != 0;
 
-		std::vector<rock> input = createInputRocks({b0, b1, b2, b3});
-		std::vector<rock> output = stone.inference(input);
-		std::vector<bool> bits = extractOutputBits(output, 1);
+		std::vector<bool> input = {b0, b1, b2, b3};
+		std::vector<bool> output = stone.inference(input);
 
 		bool expected = (b0 ^ b1 ^ b2 ^ b3);
-		ASSERT_EQ(bits[0], expected);
+		ASSERT_EQ(output[0], expected);
 	}
 }
 
-TEST_CASE("Stone_MultiRock_WideCircuitInputs") {
-	// 130 inputs: spans across Rock 0 (bits 0..127) and Rock 1 (bits 128..129)
-	// 2 outputs:
-	// Output 0: XOR of input 0 (in rock 0) and input 129 (in rock 1)
-	// Output 1: AND of input 63 (lane 0) and input 64 (lane 1)
+TEST_CASE("Stone_WideCircuitInputs") {
+	// 130 inputs, 2 outputs
+	// Output 0: XOR of input 0 and input 129
+	// Output 1: AND of input 63 and input 64
 	std::string path = "test_wide_inputs.stb";
 	TempFileRemover remover(path);
 
@@ -296,47 +285,39 @@ TEST_CASE("Stone_MultiRock_WideCircuitInputs") {
 	std::vector<bool> inputBits(130, false);
 	// Test case 1: all false
 	{
-		std::vector<rock> input = createInputRocks(inputBits);
-		std::vector<rock> output = stone.inference(input);
-		std::vector<bool> bits = extractOutputBits(output, 2);
-		ASSERT_FALSE(bits[0]);
-		ASSERT_FALSE(bits[1]);
+		std::vector<bool> output = stone.inference(inputBits);
+		ASSERT_FALSE(output[0]);
+		ASSERT_FALSE(output[1]);
 	}
 
 	// Test case 2: in0 = true, in129 = false => XOR = true
 	{
 		inputBits[0] = true;
 		inputBits[129] = false;
-		std::vector<rock> input = createInputRocks(inputBits);
-		std::vector<rock> output = stone.inference(input);
-		std::vector<bool> bits = extractOutputBits(output, 2);
-		ASSERT_TRUE(bits[0]);
-		ASSERT_FALSE(bits[1]);
+		std::vector<bool> output = stone.inference(inputBits);
+		ASSERT_TRUE(output[0]);
+		ASSERT_FALSE(output[1]);
 	}
 
 	// Test case 3: in0 = true, in129 = true => XOR = false
 	{
 		inputBits[0] = true;
 		inputBits[129] = true;
-		std::vector<rock> input = createInputRocks(inputBits);
-		std::vector<rock> output = stone.inference(input);
-		std::vector<bool> bits = extractOutputBits(output, 2);
-		ASSERT_FALSE(bits[0]);
-		ASSERT_FALSE(bits[1]);
+		std::vector<bool> output = stone.inference(inputBits);
+		ASSERT_FALSE(output[0]);
+		ASSERT_FALSE(output[1]);
 	}
 
 	// Test case 4: in63 = true, in64 = true => AND = true
 	{
 		inputBits[63] = true;
 		inputBits[64] = true;
-		std::vector<rock> input = createInputRocks(inputBits);
-		std::vector<rock> output = stone.inference(input);
-		std::vector<bool> bits = extractOutputBits(output, 2);
-		ASSERT_TRUE(bits[1]);
+		std::vector<bool> output = stone.inference(inputBits);
+		ASSERT_TRUE(output[1]);
 	}
 }
 
-TEST_CASE("Stone_MultiRock_WideCircuitOutputs") {
+TEST_CASE("Stone_WideCircuitOutputs") {
 	// Circuit with 2 inputs, 130 outputs
 	// All outputs are copies or inversions of input 0 or input 1
 	std::string path = "test_wide_outputs.stb";
@@ -359,32 +340,100 @@ TEST_CASE("Stone_MultiRock_WideCircuitOutputs") {
 
 	// Test with in0 = true, in1 = false
 	{
-		std::vector<rock> input = createInputRocks({true, false});
-		std::vector<rock> output = stone.inference(input);
-		ASSERT_EQ(output.size(), 2); // 130 bits requires 2 rocks (2 * 128 = 256 bits)
-		std::vector<bool> bits = extractOutputBits(output, 130);
+		std::vector<bool> input = {true, false};
+		std::vector<bool> output = stone.inference(input);
+		ASSERT_EQ(output.size(), 130);
 
 		for (uint32_t i = 0; i < 130; ++i) {
 			if (i % 2 == 0) {
-				ASSERT_TRUE(bits[i]); // true ^ false = true
+				ASSERT_TRUE(output[i]); // true ^ false = true
 			} else {
-				ASSERT_FALSE(bits[i]); // true & false = false
+				ASSERT_FALSE(output[i]); // true & false = false
 			}
 		}
 	}
 
 	// Test with in0 = true, in1 = true
 	{
-		std::vector<rock> input = createInputRocks({true, true});
-		std::vector<rock> output = stone.inference(input);
-		std::vector<bool> bits = extractOutputBits(output, 130);
+		std::vector<bool> input = {true, true};
+		std::vector<bool> output = stone.inference(input);
+		ASSERT_EQ(output.size(), 130);
 
 		for (uint32_t i = 0; i < 130; ++i) {
 			if (i % 2 == 0) {
-				ASSERT_FALSE(bits[i]); // true ^ true = false
+				ASSERT_FALSE(output[i]); // true ^ true = false
 			} else {
-				ASSERT_TRUE(bits[i]); // true & true = true
+				ASSERT_TRUE(output[i]); // true & true = true
 			}
+		}
+	}
+}
+
+TEST_CASE("Stone_Caching_SharedSubexpression") {
+	// Diamond DAG with shared subexpression:
+	// in0, in1
+	// Gate 0 (id 2): XOR(in0, in1)
+	// Gate 1 (id 3): AND(Gate 0, Gate 0) -> Both inputs share Gate 0
+	// Gate 2 (id 4): OR(Gate 1, Gate 0) -> Shares Gate 1 and Gate 0
+	std::string path = "test_caching_shared.stb";
+	TempFileRemover remover(path);
+
+	StbBuilder builder(2, 1, 2);
+	builder.addGate(0x6, {0, 1}); // Gate 0: in0 ^ in1
+	builder.addGate(0x8, {2, 2}); // Gate 1: Gate 0 & Gate 0
+	builder.addGate(0xE, {3, 2}); // Gate 2: Gate 1 | Gate 0 (Output 0)
+	builder.writeToTempFile(path);
+
+	Stone stone(path);
+
+	for (int a = 0; a <= 1; ++a) {
+		for (int b = 0; b <= 1; ++b) {
+			std::vector<bool> input = {a != 0, b != 0};
+			std::vector<bool> output = stone.inference(input);
+
+			bool g0 = (a != 0) ^ (b != 0);
+			bool g1 = g0 && g0;
+			bool g2 = g1 || g0;
+
+			ASSERT_EQ(output[0], g2);
+		}
+	}
+}
+
+TEST_CASE("Stone_Caching_ResetBetweenInferences") {
+	// Ensure that cache state is completely reset between subsequent inference() calls
+	std::string path = "test_caching_reset.stb";
+	TempFileRemover remover(path);
+
+	StbBuilder builder(2, 2, 2);
+	builder.addGate(0x6, {0, 1}); // XOR (Sum)
+	builder.addGate(0x8, {0, 1}); // AND (Carry)
+	builder.writeToTempFile(path);
+
+	Stone stone(path);
+
+	// Alternate inputs 50 times
+	for (int iter = 0; iter < 50; ++iter) {
+		// Input 1: (true, true) => Sum=0, Carry=1
+		{
+			std::vector<bool> in1 = {true, true};
+			std::vector<bool> out1 = stone.inference(in1);
+			ASSERT_FALSE(out1[0]);
+			ASSERT_TRUE(out1[1]);
+		}
+		// Input 2: (true, false) => Sum=1, Carry=0
+		{
+			std::vector<bool> in2 = {true, false};
+			std::vector<bool> out2 = stone.inference(in2);
+			ASSERT_TRUE(out2[0]);
+			ASSERT_FALSE(out2[1]);
+		}
+		// Input 3: (false, false) => Sum=0, Carry=0
+		{
+			std::vector<bool> in3 = {false, false};
+			std::vector<bool> out3 = stone.inference(in3);
+			ASSERT_FALSE(out3[0]);
+			ASSERT_FALSE(out3[1]);
 		}
 	}
 }

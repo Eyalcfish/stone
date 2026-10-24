@@ -5,9 +5,9 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 if(MSVC)
-	add_compile_options(/W4)
+	add_compile_options(/W4 /O2)
 else()
-	add_compile_options(-Wall -Wextra -Wno-ignored-attributes)
+	add_compile_options(-Wall -Wextra -Wno-ignored-attributes -O3)
 endif()
 
 # Core Library
@@ -36,3 +36,10 @@ target_include_directories(stone_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/tests
 target_link_libraries(stone_tests PRIVATE stone_lib)
 
 add_test(NAME stone_tests COMMAND stone_tests)
+
+# Benchmark Tool
+add_executable(stone_benchmark
+	tests/benchmark.cpp
+)
+target_include_directories(stone_benchmark PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/tests)
+target_link_libraries(stone_benchmark PRIVATE stone_lib)

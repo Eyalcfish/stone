@@ -77,29 +77,3 @@ struct TempFileRemover {
 		std::remove(path.c_str());
 	}
 };
-
-inline std::vector<rock> createInputRocks(const std::vector<bool>& bits) {
-	uint32_t rockCount = (static_cast<uint32_t>(bits.size()) + highestPackedBits - 1) / highestPackedBits;
-	if (rockCount == 0) rockCount = 1;
-	std::vector<rock> vec(rockCount);
-
-	for (size_t i = 0; i < rockCount; ++i) {
-		uint64_t* lanes = reinterpret_cast<uint64_t*>(&vec[i]);
-		lanes[0] = 0;
-		lanes[1] = 0;
-	}
-
-	for (size_t i = 0; i < bits.size(); ++i) {
-		setValue(vec, i, bits[i]);
-	}
-
-	return vec;
-}
-
-inline std::vector<bool> extractOutputBits(std::vector<rock>& rocks, size_t count) {
-	std::vector<bool> result(count);
-	for (size_t i = 0; i < count; ++i) {
-		result[i] = getValue(rocks, i);
-	}
-	return result;
-}
