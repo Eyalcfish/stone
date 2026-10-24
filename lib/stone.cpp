@@ -53,8 +53,7 @@ Stone::Stone(const std::string& path) {
     uint32_t numHiddens = this->stbHeader.amountOfGates - this->stbHeader.amountOfInputs;
     this->outputs = (Pebble*)((char*)this->hiddens + pebbleSize * (numHiddens - this->stbHeader.amountOfOutputs));
 
-    uint32_t cachedRocks = ((numHiddens*2) + highestPackedBits - 1) / highestPackedBits;
-    this->cache.resize(cachedRocks);
+    this->cache.resize(numHiddens*2);
 }
 
 bool Stone::pebbleProcess(Pebble* self) {
@@ -62,7 +61,7 @@ bool Stone::pebbleProcess(Pebble* self) {
         //caching
         uint32_t index = ((self - this->hiddens) / (this->stbHeader.LUTK+1))*2;
 
-        if (getValue(this->cache, index)) return getValue(this->cache, index+1);
+        if (this->cache[index]) return this->cache[index+1];
 
         uint8_t input = 0;
         for(int i = 0 ; i < this->stbHeader.LUTK ; i++) { // pack all of the values of the former gates
@@ -70,28 +69,26 @@ bool Stone::pebbleProcess(Pebble* self) {
         }
 
         bool res = calcTT(input, self->tt);
-        setValue(this->cache, index, 1);
-        setValue(this->cache, index + 1, res);
+        this->cache[index++] = true;
+        this->cache[index] = res;
         return res; // calc the tt result
     }
-    return getValue(this->value, self - this->inputs); // get the value directly from value if its a input node
+    return this->value[self - this->inputs]; // get the value directly from value if its a input node
 }
 
-std::vector<rock> Stone::inference(std::vector<rock> &input) {
+std::vector<bool> Stone::inference(std::vector<bool> &input) {
     uint32_t pebbleSize = (this->stbHeader.LUTK+1)*sizeof(uint64_t);
 
     this->value = input;
 
-    uint32_t outputRocks = (this->stbHeader.amountOfOutputs + highestPackedBits - 1) / highestPackedBits;
-
-    std::vector<rock> output(outputRocks); // initiate output vector
+    std::vector<bool> output(this->stbHeader.amountOfOutputs); // initiate output vector
 
     for(int i = 0 ; i < this->stbHeader.amountOfOutputs ; i++) {
         bool res = this->pebbleProcess((Pebble*)((char*)this->outputs + (pebbleSize * i)));
-        setValue(output, i, res);
+        output[i] = res;
     }
 
-    memset(this->cache.data(), 0, this->cache.size() * sizeof(rock));
+    std::fill(this->cache.begin(), this->cache.end(), false);
 
     return output;
 };
