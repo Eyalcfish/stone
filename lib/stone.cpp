@@ -52,17 +52,27 @@ Stone::Stone(const std::string& path) {
 
     uint32_t numHiddens = this->stbHeader.amountOfGates - this->stbHeader.amountOfInputs;
     this->outputs = (Pebble*)((char*)this->hiddens + pebbleSize * (numHiddens - this->stbHeader.amountOfOutputs));
+
+    uint32_t cachedRocks = ((numHiddens*2) + highestPackedBits - 1) / highestPackedBits;
+    this->cache.resize(cachedRocks);
 }
 
 bool Stone::pebbleProcess(Pebble* self) {
     if (self >= this->hiddens) {
-        uint8_t input = 0;
+        //caching
+        uint32_t index = ((self - this->hiddens) / (this->stbHeader.LUTK+1))*2;
 
+        if (getValue(this->cache, index)) return getValue(this->cache, index+1);
+
+        uint8_t input = 0;
         for(int i = 0 ; i < this->stbHeader.LUTK ; i++) { // pack all of the values of the former gates
             input |= this->pebbleProcess(self->inputs[i]) << i;
         }
 
-        return calcTT(input, self->tt); // calc the tt result
+        bool res = calcTT(input, self->tt);
+        setValue(this->cache, index, 1);
+        setValue(this->cache, index + 1, res);
+        return res; // calc the tt result
     }
     return getValue(this->value, self - this->inputs); // get the value directly from value if its a input node
 }
@@ -80,6 +90,8 @@ std::vector<rock> Stone::inference(std::vector<rock> &input) {
         bool res = this->pebbleProcess((Pebble*)((char*)this->outputs + (pebbleSize * i)));
         setValue(output, i, res);
     }
+
+    memset(this->cache.data(), 0, this->cache.size() * sizeof(rock));
 
     return output;
 };
