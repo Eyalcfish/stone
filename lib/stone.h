@@ -22,9 +22,9 @@ class Stone {
     private:
          std::vector<uint64_t> lutStack;
          std::vector<uint8_t> cacheStack;
-         uint32_t cacheStackPointer;
+         uint32_t cacheStackPointer = 0;
          std::vector<uint8_t> valueStack;
-         uint32_t valueStackPointer;
+         uint32_t valueStackPointer = 0;
 
         bool pebbleProcess(Pebble* self);
         std::vector<bool> initInference();
